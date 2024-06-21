@@ -1,0 +1,38 @@
+name: update
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+  schedule:
+    - cron: '5 22 * * *'
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repo main
+        uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9 
+      - name: Install dependencies
+        run: |
+          python -m pip install pip==22.0.4
+          
+      - name: Retryable Python Run
+        uses: nick-fields/retry@v2
+        with:
+            command: |
+              pip install -r requirements.txt
+              git pull
+              python main.py
+              printf "%(%Y-%m-%d-%H:%M:%S)T-script updated\n" >> logs.txt
+              git config --global user.email "thecricstersxbigcric@outlook.com"
+              git config --global user.name "thecricstersxbigcric"
+              git add .
+              git commit -am "updated"
+              git push
+            timeout_minutes: 3
+            max_attempts: 3
